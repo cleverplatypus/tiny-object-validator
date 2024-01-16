@@ -1,0 +1,20 @@
+{
+  "name": "tiny-object-validator",
+  "version": "1.0.0",
+  "description": "Small library to organise JavaScript/TypeScript objects' validation",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "postinstall": "vitest"
+  },
+  "author": "Nicola Dal Pont",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "lodash.get": "^4.4.2",
+    "lodash.set": "^4.3.2"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.0"
+  }
+}
