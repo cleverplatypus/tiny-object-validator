@@ -1,5 +1,7 @@
 # Tiny Object Validator
 
+![Tests](https://github.com/cleverplatypus/vue3-routable/actions/workflows/test.yml/badge.svg)
+
 A small library to handle validation of an object's properties using field rules.
 
 'Tiny' because it only concern itself with providing a mechanism to inspect and object and applying user defined rules rather than duplicating the effort of well established validation libraries such as [validator.js](https://www.npmjs.com/package/validator). 
