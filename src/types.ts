@@ -36,6 +36,6 @@ export type ValidationField = {
 }
 
 export type ValidationTest = {
-    fn : (value : any, context : ValidationContext) => boolean
+    fn : (value : any, context : ValidationContext) => boolean | string
     message? : string | ((context : ValidationContext) => string)
 }
