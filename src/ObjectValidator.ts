@@ -65,15 +65,11 @@ export class ObjectValidator {
     for (let field of fields) {
       const fieldData = get(source, field.name);
       const isEmpty = await (field.emptyTest || this.emptyFieldTest)(fieldData);
-      const aContext = Object.freeze(
-        Object.assign(
-          {
+      const aContext = Object.freeze({
             currentFieldName: field.name,
             source,
-          },
-          contextData
-        )
-      );
+            contextData : contextData
+          });
 
       if (field.skipIf && field.skipIf(aContext)) {
         continue;
