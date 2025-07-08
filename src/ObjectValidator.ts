@@ -1,4 +1,5 @@
 import type {
+  EmptyFieldTest,
   ValidationContext,
   ValidationFields,
   ValidationMessage,
@@ -7,10 +8,10 @@ import type {
 import set from "lodash.set";
 import get from "lodash.get";
 
-export const EMPTY_MANDATORY_FIELD_ERROR = "empty-mandatory-field";
-export const DEFAULT_FAILED_FIELD_MESSAGE = "field-validation-failed";
+export const DEFAULT_EMPTY_MANDATORY_FIELD_ERROR = "empty-mandatory-field";
+export const DEFAULT_FAILED_FIELD_ERROR = "field-validation-failed";
 
-const DEFAULT_EMPTY_FIELD_TEST = (data) =>
+const DEFAULT_EMPTY_FIELD_TEST : EmptyFieldTest = (data, context) =>
   typeof data !== "number" && (data === false || !data?.length); //this covers required true, null, undefined, '' and empty array
 
 function resolveMessage(
@@ -26,9 +27,34 @@ function resolveMessage(
  * multiple times to validate objects.
  */
 export class ObjectValidator {
+  private static defaultMandatoryFieldError: ValidationMessage = DEFAULT_EMPTY_MANDATORY_FIELD_ERROR;
+  private static defaultFailedFieldMessage: ValidationMessage = DEFAULT_FAILED_FIELD_ERROR;
+    
   private fields: ValidationFields;
-  private mandatoryFieldError: ValidationMessage = EMPTY_MANDATORY_FIELD_ERROR;
+  private mandatoryFieldError: ValidationMessage = DEFAULT_EMPTY_MANDATORY_FIELD_ERROR;
+  private failedFieldError: ValidationMessage = DEFAULT_FAILED_FIELD_ERROR;
+
   private emptyFieldTest = DEFAULT_EMPTY_FIELD_TEST;
+
+  /**
+   * Sets the default error message to be used when a mandatory field is empty.
+   * This is used by default by all validators unless specified otherwise.
+   * 
+   * @param error The error message to be used when a mandatory field is empty.
+   */
+  static setDefaultMandatoryFieldError(error: ValidationMessage) {
+    ObjectValidator.defaultMandatoryFieldError = error;
+  }
+
+  /**
+   * Sets the default error message to be used when a field fails a test.
+   * This is used by default by all validators unless specified otherwise.
+   * 
+   * @param error The error message to be used when a field fails a test.
+   */
+  static setDefaultFailedFieldMessage(error: ValidationMessage) {
+    ObjectValidator.defaultFailedFieldMessage = error;
+  }
 
   /**
    *
@@ -36,6 +62,14 @@ export class ObjectValidator {
    */
   constructor(fields: ValidationFields) {
     this.fields = fields;
+  }
+
+  private resolveMandatoryFieldError(context: ValidationContext) {
+    return resolveMessage(this.mandatoryFieldError, context) !== resolveMessage(DEFAULT_EMPTY_MANDATORY_FIELD_ERROR, context) ? this.mandatoryFieldError : ObjectValidator.defaultMandatoryFieldError;
+  }
+
+  private resolveFailedFieldError(context: ValidationContext) {
+    return resolveMessage(this.failedFieldError, context) !== resolveMessage(DEFAULT_FAILED_FIELD_ERROR, context) ? this.failedFieldError : ObjectValidator.defaultFailedFieldMessage;
   }
 
   private async evaluateFields({
@@ -64,13 +98,13 @@ export class ObjectValidator {
 
     for (let field of fields) {
       const fieldData = get(source, field.name);
-      const isEmpty = await (field.emptyTest || this.emptyFieldTest)(fieldData);
       const aContext = Object.freeze({
-            currentFieldName: field.name,
-            source,
-            contextData : contextData
-          });
-
+        currentFieldName: field.name,
+        source,
+        contextData : contextData
+      });
+      
+      const isEmpty = await (field.emptyTest || this.emptyFieldTest)(fieldData, aContext);
       if (field.skipIf && field.skipIf(aContext)) {
         continue;
       }
@@ -87,7 +121,7 @@ export class ObjectValidator {
         invalidate(
           path,
           resolveMessage(
-            field.emptyFieldMessage || this.mandatoryFieldError,
+            field.emptyFieldMessage || this.resolveMandatoryFieldError(aContext),
             aContext
           )
         );
@@ -126,7 +160,7 @@ export class ObjectValidator {
               ? result
               : test.message
               ? resolveMessage(test.message, aContext)
-              : DEFAULT_FAILED_FIELD_MESSAGE;
+              : this.resolveFailedFieldError(aContext);
           invalidate(path, message);
           if (field.stopOnFailure) {
             if (field.stopOnFailure === "fields") {
@@ -150,6 +184,11 @@ export class ObjectValidator {
 
     return valid;
   }
+
+  withFailedFieldDefaultError(error: ValidationMessage) {
+    this.failedFieldError = error;
+    return this;
+  } 
 
   /**
    *

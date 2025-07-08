@@ -213,5 +213,66 @@ const fields = [
 ]
 ```
  
+## Validation errors
+
+The library treats empty fields and failed tests differently.
+
+Empty fields are evaluated using the an `EmptyFieldTest` function that can be customised at the validator instance level using `ObjectValidator.setDefaultEmptyFieldTest()`.
+
+The default `EmptyFieldTest` function is:
+```typescript
+const DEFAULT_EMPTY_FIELD_TEST : EmptyFieldTest = (data, context) =>
+  typeof data !== "number" && (data === false || !data?.length); 
+```
+which this covers required true, null, undefined, '' and empty array.
 
 
+### Setting messaging
+
+The library provides a default error message for mandatory fields and failed fields that can be customised.
+
+The finer grain level of customisation is at the field level using `emptyFieldMessage` and `message`.
+
+```typescript
+const fields = [
+    {
+        name : 'country',
+        tests : [
+            {
+                fn : (value) => ['US', 'AU', 'UK', 'CA'].includes(value),
+                message : 'Please select a valid country'
+            }
+        ],
+        emptyFieldMessage : 'Please select a country',
+    }
+]
+```
+
+### Dynamic error messages
+
+The `message` property can be a function that receives a `ValidationContext` object as parameter.
+
+```typescript
+const fields = [
+    {
+        name : 'country',
+        tests : [
+            {
+                fn : (value) => ['US', 'AU', 'UK', 'CA'].includes(value),
+                message : ({source}) => `"${source.country}" is not a valid country`
+            }
+        ],
+        emptyFieldMessage : 'Please select a country',
+    }
+]
+```
+
+### Default error messages
+
+It's possible to set default error messages for mandatory fields and failed fields.
+
+Error message resolution follows this order:
+
+- global level using `ObjectValidator.setDefaultMandatoryFieldError` and `ObjectValidator.setDefaultFailedFieldMessage`.
+- instance level using `withMandatoryFieldError` and `withFailedFieldDefaultError`.
+- field level using `emptyFieldMessage` and `message`.

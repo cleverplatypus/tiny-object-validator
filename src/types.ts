@@ -5,7 +5,8 @@ export type ValidationState = {
 
 export type StopPolicy = 'fields' | 'tests'
 
-export type FieldsState = { [key : string] : boolean | string }  
+export type FieldState = boolean | string
+export type FieldsState = { [key : string] : FieldState }
 
 export type ValidationMessage = string | ((context : ValidationContext) => string)
 
@@ -28,12 +29,14 @@ export type ValidationField = {
     isOptional? : boolean
     tests? : ValidationTest[]
     fields? : ValidationFields
-    emptyTest? : (value : any) => boolean
+    emptyTest? : (value : any, context : ValidationContext) => boolean
     emptyFieldMessage? : ValidationMessage
     skipIf? : (context : ValidationContext) => boolean
     stopOnFailure? : StopPolicy
     stopOnSuccess? : StopPolicy
 }
+
+export type EmptyFieldTest = (value : any, context : ValidationContext) => boolean
 
 export type ValidationTest = {
     fn : (value : any, context : ValidationContext) => boolean | string
